@@ -1,0 +1,9 @@
+{
+  "model": "BM25",
+  "num_queries": 1000,
+  "avg_query_time_ms": 12692.11866927147,
+  "recall_at_5": 0.0,
+  "precision_at_1": 0.0,
+  "precision_at_3": 0.0,
+  "precision_at_5": 0.0
+}

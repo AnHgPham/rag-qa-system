@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data
+data/raw/
+data/processed/
+data/vector_db/
+data/uploads/
+
+# Models
+outputs/models/
+*.pkl
+*.h5
+*.pt
+*.pth
+
+# Logs
+outputs/logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# ChromaDB
+chroma.sqlite3
+chroma/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Results (optional - you may want to commit these)
+# outputs/results/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation builds
+docs/_build/
+site/
