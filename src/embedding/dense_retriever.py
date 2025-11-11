@@ -55,15 +55,23 @@ class DenseEmbeddingRetriever:
         if persist_directory:
             persist_directory = Path(persist_directory)
             persist_directory.mkdir(parents=True, exist_ok=True)
-            
+
             self.client = chromadb.PersistentClient(
                 path=str(persist_directory)
             )
         else:
             self.client = chromadb.Client()
-        
+
         self.collection_name = collection_name
         self.collection = None
+
+        # Try to load existing collection
+        try:
+            self.collection = self.client.get_collection(name=collection_name)
+            print(f"✓ Loaded existing collection: {collection_name}")
+            print(f"  - Documents in collection: {self.collection.count()}")
+        except:
+            print(f"ℹ No existing collection found. Will create on fit().")
         
     def encode_texts(
         self, 
