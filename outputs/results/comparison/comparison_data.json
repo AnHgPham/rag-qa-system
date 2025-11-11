@@ -1,0 +1,45 @@
+{
+  "baseline": {
+    "model": "TF-IDF",
+    "num_queries": 1000,
+    "avg_query_time_ms": 19.61192035675049,
+    "recall_at_5": 0.504,
+    "precision_at_1": 0.279,
+    "precision_at_3": 0.427,
+    "precision_at_5": 0.504
+  },
+  "advanced": {
+    "model": "Dense Embedding",
+    "num_queries": 500,
+    "avg_retrieval_time_ms": 11.698549270629883,
+    "precision_at_1": 0.498,
+    "precision_at_3": 0.65,
+    "precision_at_5": 0.71
+  },
+  "comparison": [
+    {
+      "metric": "Precision@1",
+      "baseline": 0.279,
+      "advanced": 0.498,
+      "improvement": 78.49462365591397
+    },
+    {
+      "metric": "Precision@3",
+      "baseline": 0.427,
+      "advanced": 0.65,
+      "improvement": 52.22482435597191
+    },
+    {
+      "metric": "Precision@5",
+      "baseline": 0.504,
+      "advanced": 0.71,
+      "improvement": 40.873015873015866
+    },
+    {
+      "metric": "Avg Query Time (ms)",
+      "baseline": 0,
+      "advanced": 11.698549270629883,
+      "improvement": 0
+    }
+  ]
+}

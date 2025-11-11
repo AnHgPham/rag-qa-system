@@ -1,9 +1,9 @@
 {
   "model": "TF-IDF",
   "num_queries": 1000,
-  "avg_query_time_ms": 17.69207763671875,
-  "recall_at_5": 0.0,
-  "precision_at_1": 0.0,
-  "precision_at_3": 0.0,
-  "precision_at_5": 0.0
+  "avg_query_time_ms": 19.61192035675049,
+  "recall_at_5": 0.504,
+  "precision_at_1": 0.279,
+  "precision_at_3": 0.427,
+  "precision_at_5": 0.504
 }

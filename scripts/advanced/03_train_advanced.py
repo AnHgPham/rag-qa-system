@@ -30,6 +30,10 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 from src.embedding.dense_retriever import DenseEmbeddingRetriever, RAGAnswerGenerator
 
 # Directories
@@ -147,7 +151,7 @@ def test_rag_generation(retriever):
     print("=" * 60)
     
     # Initialize RAG generator
-    rag = RAGAnswerGenerator(model="gpt-4.1-nano")
+    rag = RAGAnswerGenerator(model="gemini-2.0-flash")
     
     # Test queries
     test_queries = [
@@ -158,28 +162,31 @@ def test_rag_generation(retriever):
     
     for query in test_queries:
         print(f"\nQuery: {query}")
-        
+
         # Retrieve
         start_time = time.time()
         retrieved = retriever.retrieve(query, top_k=3)
         retrieval_time = (time.time() - start_time) * 1000
-        
+
         # Generate answer
         start_time = time.time()
         answer = rag.generate_answer(query, retrieved)
         generation_time = (time.time() - start_time) * 1000
-        
+
         total_time = retrieval_time + generation_time
-        
+
         print(f"Timing:")
         print(f"  - Retrieval: {retrieval_time:.2f}ms")
         print(f"  - Generation: {generation_time:.2f}ms")
         print(f"  - Total: {total_time:.2f}ms")
-        
+
         print(f"\nAnswer:")
         print(f"  {answer['answer']}")
         print(f"\nSources: {answer['num_sources']}")
         print(f"Confidence: {answer['confidence']:.4f}")
+
+        # Add delay to avoid rate limiting
+        time.sleep(1.5)
 
 
 def evaluate_on_dev(retriever, use_rag=False):
@@ -204,7 +211,7 @@ def evaluate_on_dev(retriever, use_rag=False):
     print(f"Evaluating on {sample_size} samples...")
     
     # Initialize RAG if needed
-    rag = RAGAnswerGenerator(model="gpt-4.1-nano") if use_rag else None
+    rag = RAGAnswerGenerator(model="gemini-2.0-flash") if use_rag else None
     
     # Metrics
     total_queries = 0
@@ -258,9 +265,12 @@ def evaluate_on_dev(retriever, use_rag=False):
             start_time = time.time()
             answer = rag.generate_answer(question, results)
             generation_time = time.time() - start_time
-            
+
             total_generation_time += generation_time
             answers_generated += 1
+
+            # Add delay to avoid rate limiting
+            time.sleep(1.5)
     
     # Calculate metrics
     avg_retrieval_time = (total_retrieval_time / total_queries) * 1000  # ms
@@ -323,12 +333,18 @@ def main():
     print("classification, this leverages pre-trained models for")
     print("better performance than the baseline.")
     print("=" * 60)
-    
-    # Load data
+
+    # Load data from BOTH train and dev sets
+    print("\nLoading documents from train and dev sets...")
     train_docs = load_squad_documents('train')
-    
+    dev_docs = load_squad_documents('dev')
+
+    # Combine all documents
+    all_docs = train_docs + dev_docs
+    print(f"✓ Total documents: {len(all_docs)} (train: {len(train_docs)}, dev: {len(dev_docs)})")
+
     # Prepare training data
-    texts, metadata = prepare_training_data(train_docs)
+    texts, metadata = prepare_training_data(all_docs)
     
     # Train dense retriever
     retriever, train_time = train_dense_retriever(texts, metadata)

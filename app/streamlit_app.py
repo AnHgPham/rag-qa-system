@@ -74,18 +74,21 @@ def load_baseline_model():
 @st.cache_resource
 def load_advanced_model():
     """Load advanced embedding model"""
+    from dotenv import load_dotenv
+    load_dotenv()
+
     vector_db_dir = PROJECT_ROOT / "data" / "vector_db"
-    
+
     if not vector_db_dir.exists():
         return None, None
-    
+
     retriever = DenseEmbeddingRetriever(
         collection_name='squad_train',
         persist_directory=vector_db_dir
     )
-    
-    rag = RAGAnswerGenerator(model="gpt-4.1-nano")
-    
+
+    rag = RAGAnswerGenerator(model="gemini-2.0-flash")
+
     return retriever, rag
 
 # Main interface

@@ -257,12 +257,18 @@ def main():
     print("this establishes a performance baseline before applying")
     print("advanced techniques (RAG + LLM).")
     print("=" * 60)
-    
-    # Load data
+
+    # Load data from BOTH train and dev sets
+    print("\nLoading documents from train and dev sets...")
     train_docs = load_squad_documents('train')
-    
+    dev_docs = load_squad_documents('dev')
+
+    # Combine all documents
+    all_docs = train_docs + dev_docs
+    print(f"✓ Total documents: {len(all_docs)} (train: {len(train_docs)}, dev: {len(dev_docs)})")
+
     # Prepare training data
-    texts, metadata = prepare_training_data(train_docs)
+    texts, metadata = prepare_training_data(all_docs)
     
     # Train TF-IDF model
     tfidf_model, tfidf_train_time = train_tfidf_model(texts, metadata)

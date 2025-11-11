@@ -225,23 +225,38 @@ class DenseEmbeddingRetriever:
 class RAGAnswerGenerator:
     """
     RAG (Retrieval-Augmented Generation) answer generator.
-    
+
     Combines retrieval with LLM generation for high-quality answers.
     """
-    
-    def __init__(self, model: str = "gpt-4.1-nano"):
+
+    def __init__(self, model: str = "gemini-2.0-flash"):
         """
         Initialize RAG answer generator.
-        
+
         Args:
-            model: LLM model to use (gpt-4.1-nano, gpt-4.1-mini, gemini-2.5-flash)
+            model: LLM model to use
+                - OpenAI: gpt-4, gpt-4-turbo, gpt-3.5-turbo
+                - Gemini: gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
         """
-        from openai import OpenAI
-        
-        self.client = OpenAI()  # Uses OPENAI_API_KEY from env
+        import os
+
         self.model = model
-        
-        print(f"✓ Initialized RAG with LLM: {model}")
+
+        # Detect provider
+        if model.startswith('gemini'):
+            import google.generativeai as genai
+            api_key = os.getenv('GEMINI_API_KEY')
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY not found in environment variables")
+            genai.configure(api_key=api_key)
+            self.client = genai.GenerativeModel(model)
+            self.provider = 'gemini'
+        else:
+            from openai import OpenAI
+            self.client = OpenAI()  # Uses OPENAI_API_KEY from env
+            self.provider = 'openai'
+
+        print(f"✓ Initialized RAG with LLM: {model} ({self.provider})")
     
     def build_context(self, retrieved_docs: List[Dict]) -> str:
         """Build context from retrieved documents."""
@@ -265,7 +280,9 @@ class RAGAnswerGenerator:
         query: str,
         retrieved_docs: List[Dict],
         temperature: float = 0.3,
-        max_tokens: int = 500
+        max_tokens: int = 500,
+        retry_attempts: int = 3,
+        retry_delay: float = 2.0
     ) -> Dict:
         """
         Generate answer using RAG approach.
@@ -305,20 +322,51 @@ Question: {query}
 
 Answer (include citations):"""
         
-        # Call LLM
+        # Call LLM based on provider with retry logic
+        import time
+
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            
-            answer_text = response.choices[0].message.content
-            
+            answer_text = None
+            for attempt in range(retry_attempts):
+                try:
+                    if self.provider == 'gemini':
+                        # Gemini API call
+                        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+                        response = self.client.generate_content(
+                            full_prompt,
+                            generation_config={
+                                'temperature': temperature,
+                                'max_output_tokens': max_tokens,
+                            }
+                        )
+                        answer_text = response.text
+                    else:
+                        # OpenAI API call
+                        response = self.client.chat.completions.create(
+                            model=self.model,
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_prompt}
+                            ],
+                            temperature=temperature,
+                            max_tokens=max_tokens
+                        )
+                        answer_text = response.choices[0].message.content
+
+                    # Success - break out of retry loop
+                    break
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if '429' in error_msg or 'rate limit' in error_msg.lower():
+                        if attempt < retry_attempts - 1:
+                            wait_time = retry_delay * (attempt + 1)  # Exponential backoff
+                            print(f"⚠ Rate limit hit, waiting {wait_time}s before retry {attempt + 2}/{retry_attempts}...")
+                            time.sleep(wait_time)
+                            continue
+                    # Re-raise if not rate limit or out of retries
+                    raise
+
             # Extract sources
             sources = [
                 {
@@ -328,7 +376,7 @@ Answer (include citations):"""
                 }
                 for doc in retrieved_docs
             ]
-            
+
             return {
                 'answer': answer_text,
                 'confidence': retrieved_docs[0]['score'],  # Use top result score
@@ -336,7 +384,7 @@ Answer (include citations):"""
                 'method': 'rag',
                 'num_sources': len(retrieved_docs)
             }
-            
+
         except Exception as e:
             print(f"Error generating answer: {e}")
             return {
@@ -344,5 +392,6 @@ Answer (include citations):"""
                 'confidence': 0.0,
                 'sources': [],
                 'method': 'rag',
+                'num_sources': 0,
                 'error': str(e)
             }
